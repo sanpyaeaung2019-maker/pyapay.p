@@ -1,546 +1,278 @@
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="my">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Pya Pay Passenger</title>
-    <!-- Leaflet CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <title>Pya Pay - Passenger</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-      @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
-      body { 
-        background-color: #F8FAFC; 
-        color: #1E293B; 
-        font-family: 'Plus Jakarta Sans', sans-serif; 
-        margin: 0; 
-        user-select: none;
-        overflow: hidden;
-      }
-      #map { 
-        height: 100vh; 
-        width: 100%; 
-        position: absolute; 
-        inset: 0; 
-        z-index: 0; 
-      }
-      .safe-area-bottom { padding-bottom: env(safe-area-inset-bottom); }
-      .glass-card { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(16px); }
-      
-      /* Status indicator animation */
-      .pulse-ring {
-        position: absolute; width: 80px; height: 80px; background: #45C9FF;
-        border-radius: 50%; animation: pulse 2s infinite; opacity: 0.4;
-      }
-      @keyframes pulse {
-        0% { transform: scale(0.5); opacity: 0.8; }
-        100% { transform: scale(2.5); opacity: 0; }
-      }
-      
-      .leaflet-control-attribution { display: none !important; }
-      
-      /* Map marker styles */
-      .driver-marker {
-        background-color: #45C9FF;
-        width: 24px; height: 24px;
-        border-radius: 50%;
-        border: 3px solid white;
-        box-shadow: 0 0 10px rgba(0,0,0,0.3);
-      }
-      
-      .bottom-sheet {
-        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      }
-    </style>
-    
-    <script type="importmap">
-    {
-      "imports": {
-        "react": "https://esm.sh/react@18.2.0",
-        "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
-        "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2.39.7",
-        "lucide-react": "https://esm.sh/lucide-react@0.344.0"
-      }
-    }
-    </script>
-</head>
-<body>
-    <div id="root"></div>
-
-    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #45C9FF; overflow: hidden; }
+        .safe-top { padding-top: env(safe-area-inset-top); }
+        .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+        .pya-blue { color: #45C9FF; }
+        .bg-pya { background-color: #45C9FF; }
+        #map { width: 100%; height: 100%; position: absolute; top: 0; left: 0; z-index: 0; }
+        
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        .animate-slide-up { animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+        
+        .user-loc-marker {
+            width: 20px; height: 20px;
+            background: #45C9FF;
+            border: 3px solid white;
+            border-radius: 50%;
+            box-shadow: 0 0 15px rgba(69, 201, 255, 0.6);
+            position: relative;
+        }
+        .user-loc-marker::after {
+            content: '';
+            position: absolute;
+            width: 40px; height: 40px;
+            background: rgba(69, 201, 255, 0.2);
+            border-radius: 50%;
+            top: -13px; left: -13px;
+            animation: ripple 2s infinite;
+        }
+        @keyframes ripple { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(2); opacity: 0; } }
+
+        .service-card { border: 2px solid transparent; transition: all 0.3s; }
+        .service-card.active { border-color: #45C9FF; background-color: rgba(69, 201, 255, 0.05); }
+        
+        #gps-error {
+            display: none; position: fixed; inset: 0; z-index: 200;
+            background: white; flex-direction: column; align-items: center; justify-content: center;
+            padding: 30px; text-align: center;
+        }
+    </style>
+</head>
+<body class="h-screen flex flex-col">
+
+    <!-- Splash Screen -->
+    <div id="splash" class="fixed inset-0 z-[150] bg-pya flex flex-col items-center justify-center transition-opacity duration-700">
+        <div class="w-24 h-24 bg-white rounded-full flex items-center justify-center shadow-2xl mb-4">
+            <span class="text-pya text-3xl font-black italic">PYA</span>
+        </div>
+        <h1 class="text-white text-3xl font-black tracking-tighter">Pya Pay</h1>
+        <p class="text-white/70 font-bold uppercase tracking-[0.2em] text-[8px] mt-1 italic">Myanmar's Trusted Ride</p>
+    </div>
+
+    <!-- GPS Error Message -->
+    <div id="gps-error">
+        <div class="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mb-5">
+            <i data-lucide="map-pin-off" class="w-10 h-10 text-red-500"></i>
+        </div>
+        <h2 class="text-xl font-black text-gray-800 mb-3">GPS အချက်ပြ မရရှိပါ</h2>
+        <p class="text-gray-500 font-bold text-sm mb-6 leading-relaxed">တည်နေရာ အမှန်တကယ် သိရှိနိုင်ရန် သင်၏ဖုန်းတွင် GPS တည်နေရာဖွင့်ထားရန် လိုအပ်ပါသည်။</p>
+        <button onclick="location.reload()" class="w-full max-w-xs bg-pya text-white font-black py-4 rounded-2xl text-base shadow-xl">ပြန်လည်ကြိုးစားမည်</button>
+    </div>
+
+    <!-- UI Components -->
+    <div id="app-content" class="relative z-10 flex flex-col h-full pointer-events-none">
+        <div id="map"></div>
+        
+        <!-- Top Nav -->
+        <header class="p-4 safe-top flex items-center justify-between pointer-events-auto relative z-20">
+            <button class="bg-white p-3.5 rounded-2xl shadow-xl active:scale-90 transition-transform border border-gray-100">
+                <i data-lucide="menu" class="pya-blue w-6 h-6"></i>
+            </button>
+            <div class="bg-white/90 backdrop-blur px-4 py-2 rounded-2xl shadow-xl flex items-center gap-2 border border-gray-100">
+                <div id="gps-indicator" class="w-2.5 h-2.5 rounded-full bg-gray-300"></div>
+                <span class="text-[10px] font-black text-gray-800 tracking-tight uppercase">GPS: <span id="gps-text">...</span></span>
+            </div>
+        </header>
+
+        <div class="flex-1"></div>
+
+        <!-- Recenter Button -->
+        <div class="pointer-events-auto flex flex-col items-end px-4 mb-4 relative z-20">
+            <button onclick="smartRecenter()" class="bg-white p-3.5 rounded-2xl shadow-xl text-pya active:scale-90 transition-transform border-2 border-white">
+                <i data-lucide="crosshair" class="w-6 h-6"></i>
+            </button>
+        </div>
+
+        <!-- Bottom Sheet -->
+        <div id="bottom-sheet" class="bg-white rounded-t-[40px] shadow-2xl p-6 safe-bottom animate-slide-up border-t border-gray-50 pointer-events-auto max-h-[80vh] overflow-y-auto relative z-20">
+            <div class="w-12 h-1 bg-gray-100 rounded-full mx-auto mb-6"></div>
+            
+            <div id="view-home" class="space-y-6">
+                <h2 class="text-xl font-black text-gray-800 tracking-tight">ဘယ်ကို သွားမှာလဲ?</h2>
+                
+                <div class="space-y-3">
+                    <div class="flex items-center gap-4 bg-gray-50 p-4 rounded-2xl">
+                        <div class="w-8 h-8 rounded-xl bg-green-500 flex items-center justify-center text-white"><i data-lucide="map-pin" class="w-4 h-4"></i></div>
+                        <div class="flex-1">
+                            <p class="text-[8px] font-black text-gray-400 uppercase tracking-widest">My Location</p>
+                            <input type="text" id="pickup-display" readonly value="ရှာဖွေနေဆဲ..." class="bg-transparent border-none outline-none w-full font-bold text-gray-800 text-sm">
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-4 bg-gray-50 p-4 rounded-2xl border-2 border-transparent focus-within:border-pya transition-all">
+                        <div class="w-8 h-8 rounded-xl bg-red-500 flex items-center justify-center text-white"><i data-lucide="navigation" class="w-4 h-4"></i></div>
+                        <div class="flex-1">
+                            <p class="text-[8px] font-black text-gray-400 uppercase tracking-widest">Destination</p>
+                            <input type="text" id="destination-input" placeholder="သွားမည့်နေရာ" class="bg-transparent border-none outline-none w-full font-bold text-gray-800 text-sm">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-3 gap-3">
+                    <div onclick="setVehicle('ECONOMY')" id="v-ECONOMY" class="service-card active rounded-2xl p-3 flex flex-col items-center gap-1.5 bg-gray-50/50">
+                        <i data-lucide="car" class="w-6 h-6 pya-blue"></i>
+                        <span class="text-[9px] font-black uppercase text-gray-800">Car</span>
+                    </div>
+                    <div onclick="setVehicle('BIKE')" id="v-BIKE" class="service-card rounded-2xl p-3 flex flex-col items-center gap-1.5 bg-gray-50/50">
+                        <i data-lucide="bike" class="w-6 h-6 text-gray-300"></i>
+                        <span class="text-[9px] font-black uppercase text-gray-400">Bike</span>
+                    </div>
+                    <div onclick="setVehicle('VAN')" id="v-VAN" class="service-card rounded-2xl p-3 flex flex-col items-center gap-1.5 bg-gray-50/50">
+                        <i data-lucide="truck" class="w-6 h-6 text-gray-300"></i>
+                        <span class="text-[9px] font-black uppercase text-gray-400">Van</span>
+                    </div>
+                </div>
+
+                <button onclick="bookRide()" id="book-btn" class="w-full bg-pya text-white font-black py-4 rounded-2xl shadow-lg text-lg active:scale-95 transition-all">
+                    ကားခေါ်မည်
+                </button>
+            </div>
+
+            <!-- View Searching -->
+            <div id="view-searching" class="hidden py-6 text-center animate-slide-up space-y-6">
+                <div class="w-20 h-20 mx-auto relative flex items-center justify-center">
+                    <div class="absolute inset-0 border-4 border-pya/10 rounded-full"></div>
+                    <div class="absolute inset-0 border-t-4 border-pya rounded-full animate-spin"></div>
+                    <i data-lucide="search" class="w-8 h-8 text-pya"></i>
+                </div>
+                <h2 class="text-lg font-black text-gray-800">ယာဉ်မောင်း ရှာဖွေနေပါသည်</h2>
+                <button onclick="cancelBooking()" class="w-full bg-red-50 text-red-500 font-black py-4 rounded-2xl text-sm">ပယ်ဖျက်မည်</button>
+            </div>
+        </div>
+    </div>
 
     <script type="module">
-        import React, { useState, useEffect, useRef } from 'react';
-        import { createRoot } from 'react-dom/client';
-        import { createClient } from '@supabase/supabase-js';
-        import { 
-            Home, Wallet, User, ArrowRight, Bike, Car, MapPin, X, 
-            Navigation, Star, Phone, ChevronLeft, Target, ShieldCheck, 
-            Search, History, LogOut 
-        } from 'lucide-react';
+        import { createClient } from 'https://esm.sh/@supabase/supabase-js@^2.90.1';
+        const supabaseUrl = 'https://pgjeyazxdcdibtlgntcv.supabase.co';
+        const supabaseKey = 'sb_publishable_htbAIYFf4liqDj1if_LEBw_B15Y0Bp9';
+        const supabase = createClient(supabaseUrl, supabaseKey);
 
-        const supabase = createClient('https://pgjeyazxdcdibtlgntcv.supabase.co', 'sb_publishable_htbAIYFf4liqDj1if_LEBw_B15Y0Bp9');
+        let map, userMarker, accuracyCircle;
+        let currentPos = null; 
+        let selectedVehicle = 'ECONOMY';
+        let activeTripId = null;
 
-        const App = () => {
-            const [loading, setLoading] = useState(true);
-            const [session, setSession] = useState(null);
-            const [passenger, setPassenger] = useState(null);
-            const [currentPage, setCurrentPage] = useState('HOME');
-
-            useEffect(() => {
-                supabase.auth.getSession().then(({ data: { session } }) => {
-                    setSession(session);
-                    if (session) fetchProfile(session.user.id);
-                    setLoading(false);
-                });
-
-                const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-                    setSession(session);
-                    if (session) fetchProfile(session.user.id);
-                    else setPassenger(null);
-                });
-
-                return () => subscription.unsubscribe();
-            }, []);
-
-            const fetchProfile = async (id) => {
-                const { data, error } = await supabase
-                    .from('passengers')
-                    .select('*')
-                    .eq('id', id)
-                    .maybeSingle();
-                
-                if (data) setPassenger(data);
-                else {
-                    // Create basic profile if doesn't exist (demo mode)
-                    const { data: newPax } = await supabase.from('passengers').upsert({
-                        id: id,
-                        full_name: 'ခရီးသည်',
-                        wallet_balance: 5000
-                    }).select().single();
-                    setPassenger(newPax);
-                }
-            };
-
-            if (loading) return (
-                <div className="flex flex-col items-center justify-center h-screen bg-[#45C9FF]">
-                    <div className="animate-bounce bg-white w-24 h-24 rounded-[32px] flex items-center justify-center shadow-2xl mb-6">
-                        <span className="text-[#45C9FF] text-3xl font-black">Pya</span>
-                    </div>
-                </div>
-            );
-
-            if (!session) return <AuthScreen />;
-
-            return (
-                <div className="flex flex-col h-screen overflow-hidden bg-slate-50">
-                    <div className="flex-1 relative overflow-hidden">
-                        {currentPage === 'HOME' && <HomeScreen passenger={passenger} />}
-                        {currentPage === 'WALLET' && <WalletScreen passenger={passenger} onNavigate={setCurrentPage} />}
-                        {currentPage === 'PROFILE' && <ProfileScreen passenger={passenger} />}
-                    </div>
-                    
-                    <nav className="bg-white flex justify-around items-center py-4 border-t safe-area-bottom z-[1000] shadow-[0_-10px_30px_rgba(0,0,0,0.05)]">
-                        <button onClick={() => setCurrentPage('HOME')} className={`flex flex-col items-center transition-all ${currentPage === 'HOME' ? 'text-[#45C9FF] scale-110' : 'text-slate-300'}`}>
-                            <Home className="w-6 h-6" /><span className="text-[10px] mt-1 font-bold">ပင်မ</span>
-                        </button>
-                        <button onClick={() => setCurrentPage('WALLET')} className={`flex flex-col items-center transition-all ${currentPage === 'WALLET' ? 'text-[#45C9FF] scale-110' : 'text-slate-300'}`}>
-                            <Wallet className="w-6 h-6" /><span className="text-[10px] mt-1 font-bold">ပိုက်ဆံအိတ်</span>
-                        </button>
-                        <button onClick={() => setCurrentPage('PROFILE')} className={`flex flex-col items-center transition-all ${currentPage === 'PROFILE' ? 'text-[#45C9FF] scale-110' : 'text-slate-300'}`}>
-                            <User className="w-6 h-6" /><span className="text-[10px] mt-1 font-bold">အကောင့်</span>
-                        </button>
-                    </nav>
-                </div>
-            );
-        };
-
-        const AuthScreen = () => {
-            const [email, setEmail] = useState('');
-            const [password, setPassword] = useState('');
-            const [isLogin, setIsLogin] = useState(true);
-            const [authLoading, setAuthLoading] = useState(false);
-
-            const handleAuth = async (e) => {
-                e.preventDefault();
-                setAuthLoading(true);
-                const { error } = isLogin 
-                    ? await supabase.auth.signInWithPassword({ email, password })
-                    : await supabase.auth.signUp({ email, password });
-                
-                if (error) alert(error.message);
-                setAuthLoading(false);
-            };
-
-            return (
-                <div className="h-screen bg-[#45C9FF] p-8 flex flex-col justify-center">
-                    <div className="text-center mb-10">
-                        <div className="w-20 h-20 bg-white rounded-[32px] flex items-center justify-center mx-auto mb-6 shadow-2xl">
-                            <span className="text-[#45C9FF] text-2xl font-black">Pya</span>
-                        </div>
-                        <h2 className="text-3xl font-black text-white uppercase tracking-tighter">Pya Pay</h2>
-                        <p className="text-white/80 font-bold uppercase text-[10px] tracking-widest mt-2">Passenger App</p>
-                    </div>
-                    <div className="bg-white p-8 rounded-[40px] shadow-2xl space-y-4">
-                        <input type="email" placeholder="Email" className="w-full bg-slate-50 p-4 rounded-2xl font-bold outline-none border-2 border-transparent focus:border-[#45C9FF]" value={email} onChange={e => setEmail(e.target.value)} />
-                        <input type="password" placeholder="Password" className="w-full bg-slate-50 p-4 rounded-2xl font-bold outline-none border-2 border-transparent focus:border-[#45C9FF]" value={password} onChange={e => setPassword(e.target.value)} />
-                        <button onClick={handleAuth} disabled={authLoading} className="w-full bg-[#45C9FF] text-white font-black py-4 rounded-2xl shadow-lg flex items-center justify-center space-x-2 active:scale-95 transition-all">
-                            <span>{authLoading ? 'စောင့်ဆိုင်းပါ...' : (isLogin ? 'အကောင့်ဝင်မည်' : 'အကောင့်ဖွင့်မည်')}</span>
-                            <ArrowRight className="w-5 h-5" />
-                        </button>
-                        <button onClick={() => setIsLogin(!isLogin)} className="w-full text-slate-400 font-bold text-xs pt-2">
-                            {isLogin ? 'အကောင့်အသစ်ဖွင့်ရန် နှိပ်ပါ' : 'အကောင့်ရှိပြီးသားဆိုလျှင် ဝင်ရန် နှိပ်ပါ'}
-                        </button>
-                    </div>
-                </div>
-            );
-        };
-
-        const HomeScreen = ({ passenger }) => {
-            const mapRef = useRef(null);
-            const markerRef = useRef(null);
-            const driverMarkerRef = useRef(null);
+        window.onload = () => {
+            lucide.createIcons();
+            initMap();
+            startGPS();
             
-            const [step, setStep] = useState('SERVICES'); // SERVICES, BOOKING, SEARCHING, ON_TRIP, COMPLETED
-            const [pickup, setPickup] = useState(null);
-            const [dropoff, setDropoff] = useState(null);
-            const [activeTrip, setActiveTrip] = useState(null);
-            const [driverInfo, setDriverInfo] = useState(null);
-            const [userLocation, setUserLocation] = useState(null);
-
-            useEffect(() => {
-                if (!mapRef.current) {
-                    mapRef.current = L.map('map', { zoomControl: false, attributionControl: false }).setView([16.8409, 96.1735], 18);
-                    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png').addTo(mapRef.current);
-                }
-
-                // Get initial location
-                navigator.geolocation.getCurrentPosition((pos) => {
-                    const latlng = [pos.coords.latitude, pos.coords.longitude];
-                    setUserLocation(latlng);
-                    mapRef.current.setView(latlng, 18);
-                    setPickup({ lat: latlng[0], lng: latlng[1], address: 'လက်ရှိတည်နေရာ' });
-                    
-                    if (!markerRef.current) {
-                        markerRef.current = L.circleMarker(latlng, { radius: 10, fillColor: '#45C9FF', color: '#fff', weight: 3, fillOpacity: 1 }).addTo(mapRef.current);
-                    }
-                });
-            }, []);
-
-            // Subscribe to Trip Updates
-            useEffect(() => {
-                if (!activeTrip) return;
-
-                const channel = supabase.channel(`trip_track_${activeTrip.id}`)
-                    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'trip_requests', filter: `id=eq.${activeTrip.id}` }, (payload) => {
-                        const updated = payload.new;
-                        setActiveTrip(updated);
-                        
-                        if (updated.status === 'ACCEPTED') {
-                            setStep('ON_TRIP');
-                            fetchDriverDetails(updated.driver_id);
-                        } else if (updated.status === 'COMPLETED') {
-                            setStep('COMPLETED');
-                        }
-                    }).subscribe();
-
-                return () => supabase.removeChannel(channel);
-            }, [activeTrip]);
-
-            // Track Driver Location
-            useEffect(() => {
-                if (!activeTrip?.driver_id) return;
-
-                const locChannel = supabase.channel(`loc_track_${activeTrip.driver_id}`)
-                    .on('postgres_changes', { event: '*', schema: 'public', table: 'live_locations', filter: `driver_id=eq.${activeTrip.driver_id}` }, (payload) => {
-                        const loc = payload.new;
-                        const latlng = [loc.latitude, loc.longitude];
-                        
-                        if (!driverMarkerRef.current) {
-                            driverMarkerRef.current = L.marker(latlng, {
-                                icon: L.divIcon({ className: 'driver-marker', iconSize: [24, 24] })
-                            }).addTo(mapRef.current);
-                        } else {
-                            driverMarkerRef.current.setLatLng(latlng);
-                        }
-                        
-                        // If searching/accepted, keep both markers in view
-                        if (step === 'ON_TRIP') {
-                             mapRef.current.flyTo(latlng, 18);
-                        }
-                    }).subscribe();
-
-                return () => supabase.removeChannel(locChannel);
-            }, [activeTrip, step]);
-
-            const fetchDriverDetails = async (id) => {
-                const { data } = await supabase.from('drivers').select('*, vehicle_details:vehicles(*)').eq('id', id).single();
-                setDriverInfo(data);
-            };
-
-            const bookRide = async () => {
-                if (!pickup || !dropoff) return alert('နေရာများ ရွေးချယ်ပေးပါ');
-                setStep('SEARCHING');
-                
-                const { data, error } = await supabase.from('trip_requests').insert({
-                    passenger_id: passenger.id,
-                    pickup_lat: pickup.lat,
-                    pickup_lng: pickup.lng,
-                    drop_lat: dropoff.lat,
-                    drop_lng: dropoff.lng,
-                    pickup_address: pickup.address,
-                    drop_address: dropoff.address,
-                    fare: 3500,
-                    distance_km: 2.5,
-                    status: 'PENDING'
-                }).select().single();
-
-                if (data) setActiveTrip(data);
-                else {
-                    alert('Error creating trip');
-                    setStep('BOOKING');
-                }
-            };
-
-            const recenter = () => {
-                if (userLocation) mapRef.current.flyTo(userLocation, 18);
-            };
-
-            return (
-                <div className="h-full relative">
-                    <div id="map"></div>
-
-                    {/* Recenter Button */}
-                    <button onClick={recenter} className="absolute right-6 bottom-1/2 translate-y-20 z-[1000] w-14 h-14 bg-white rounded-full shadow-2xl flex items-center justify-center text-[#45C9FF] active:scale-90 transition-all border border-slate-100">
-                        <Target className="w-6 h-6" />
-                    </button>
-
-                    {/* UI Screens Over Map */}
-                    <div className="absolute inset-0 z-[1000] pointer-events-none">
-                        
-                        {/* 1. Services Selection */}
-                        {step === 'SERVICES' && (
-                            <div className="h-full flex flex-col pointer-events-auto">
-                                <div className="p-6 pt-12 flex justify-between items-center bg-gradient-to-b from-white to-transparent">
-                                    <div className="bg-white p-3 rounded-2xl shadow-xl flex items-center space-x-3">
-                                        <div className="w-8 h-8 bg-[#45C9FF] rounded-lg flex items-center justify-center text-white font-black italic">P</div>
-                                        <span className="font-black text-slate-800">PYA PAY</span>
-                                    </div>
-                                    <div className="w-12 h-12 bg-white rounded-2xl shadow-xl flex items-center justify-center text-[#45C9FF]">
-                                        <ShieldCheck className="w-6 h-6" />
-                                    </div>
-                                </div>
-                                
-                                <div className="mt-auto p-6 pb-12">
-                                    <div className="bg-white/95 backdrop-blur-md p-8 rounded-[48px] shadow-2xl border border-white">
-                                        <h2 className="text-2xl font-black text-slate-800 mb-2">Mingalaba!</h2>
-                                        <p className="text-slate-400 font-bold text-sm mb-8">ယနေ့ ဘယ်သွားမလဲ?</p>
-                                        
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <button onClick={() => setStep('BOOKING')} className="bg-[#45C9FF] p-6 rounded-[32px] flex flex-col items-center text-white shadow-xl shadow-blue-200 active:scale-95 transition-all">
-                                                <Bike className="w-10 h-10 mb-2" />
-                                                <span className="font-black text-[10px] uppercase tracking-widest">သုံးဘီးခေါ်မည်</span>
-                                            </button>
-                                            <button className="bg-slate-50 p-6 rounded-[32px] flex flex-col items-center text-slate-300 opacity-60">
-                                                <Car className="w-10 h-10 mb-2" />
-                                                <span className="font-black text-[10px] uppercase tracking-widest">Taxi</span>
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* 2. Booking Screen */}
-                        {step === 'BOOKING' && (
-                            <div className="h-full flex flex-col pointer-events-auto">
-                                <div className="p-6 pt-12">
-                                    <button onClick={() => setStep('SERVICES')} className="w-12 h-12 bg-white rounded-2xl shadow-xl flex items-center justify-center text-slate-800 mb-4">
-                                        <ChevronLeft className="w-6 h-6" />
-                                    </button>
-                                    <div className="bg-white p-6 rounded-[32px] shadow-2xl space-y-4 border border-slate-50">
-                                        <div className="flex items-center space-x-4 p-4 bg-slate-50 rounded-2xl">
-                                            <MapPin className="w-5 h-5 text-[#45C9FF]" />
-                                            <input className="bg-transparent flex-1 font-bold text-sm outline-none" value={pickup?.address || ''} readOnly />
-                                        </div>
-                                        <div className="flex items-center space-x-4 p-4 bg-blue-50/50 border-2 border-[#45C9FF]/20 rounded-2xl">
-                                            <Search className="w-5 h-5 text-red-500" />
-                                            <input 
-                                                className="bg-transparent flex-1 font-black text-sm outline-none text-slate-800" 
-                                                placeholder="ဘယ်သွားမှာလဲ?" 
-                                                autoFocus
-                                                onChange={(e) => setDropoff({ lat: pickup.lat + 0.01, lng: pickup.lng + 0.01, address: e.target.value })}
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                {dropoff && (
-                                    <div className="mt-auto p-6 pb-12">
-                                        <div className="bg-white rounded-[40px] p-8 shadow-2xl border border-white animate-in slide-in-from-bottom duration-300">
-                                            <div className="flex justify-between items-center mb-6">
-                                                <div className="flex items-center space-x-3">
-                                                    <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center text-[#45C9FF]">
-                                                        <Bike className="w-7 h-7" />
-                                                    </div>
-                                                    <div>
-                                                        <h4 className="font-black text-slate-800">Pya Pay ThoneBane</h4>
-                                                        <p className="text-[10px] font-bold text-slate-400">2.5 km • 6 mins away</p>
-                                                    </div>
-                                                </div>
-                                                <div className="text-right">
-                                                    <h3 className="text-2xl font-black text-[#45C9FF]">3,500 Ks</h3>
-                                                </div>
-                                            </div>
-                                            <button onClick={bookRide} className="w-full bg-[#45C9FF] text-white font-black py-5 rounded-[24px] shadow-xl active:scale-95 transition-all text-lg uppercase tracking-widest">
-                                                Confirm Booking
-                                            </button>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        )}
-
-                        {/* 3. Searching Screen */}
-                        {step === 'SEARCHING' && (
-                            <div className="h-full flex flex-col items-center justify-center pointer-events-auto bg-black/10 backdrop-blur-[2px]">
-                                <div className="relative mb-12">
-                                    <div className="pulse-ring"></div>
-                                    <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center shadow-2xl relative z-10 border-4 border-[#45C9FF]">
-                                        <Bike className="w-10 h-10 text-[#45C9FF] animate-bounce" />
-                                    </div>
-                                </div>
-                                <div className="bg-white rounded-[40px] p-10 text-center shadow-2xl mx-6 space-y-3">
-                                    <h3 className="text-2xl font-black text-slate-800">ကားရှာနေပါသည်...</h3>
-                                    <p className="text-slate-400 font-bold text-sm">အနီးအနားရှိ Driver အား ချိတ်ဆက်နေပါသည်</p>
-                                    <button onClick={() => setStep('BOOKING')} className="text-red-500 font-black text-[10px] uppercase tracking-widest pt-6 block mx-auto">Cancel Request</button>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* 4. On Trip / Driver Accepted */}
-                        {step === 'ON_TRIP' && driverInfo && (
-                            <div className="h-full flex flex-col pointer-events-auto">
-                                <div className="mt-auto p-6 pb-12">
-                                    <div className="bg-white rounded-[48px] p-8 shadow-2xl border border-white animate-in slide-in-from-bottom duration-300 space-y-6">
-                                        <div className="flex items-center space-x-4">
-                                            <div className="relative">
-                                                <img src={driverInfo.avatar_url || `https://ui-avatars.com/api/?name=${driverInfo.full_name}&background=45C9FF&color=fff`} className="w-20 h-20 rounded-[28px] object-cover border-4 border-slate-50 shadow-lg" />
-                                                <div className="absolute -bottom-1 -right-1 bg-green-500 w-6 h-6 rounded-full border-4 border-white"></div>
-                                            </div>
-                                            <div className="flex-1">
-                                                <h4 className="text-xl font-black text-slate-800">{driverInfo.full_name}</h4>
-                                                <div className="flex items-center space-x-2 mt-1">
-                                                    <div className="flex items-center text-yellow-400">
-                                                        <Star className="w-3 h-3 fill-current" />
-                                                        <span className="text-[11px] font-black text-slate-700 ml-1">{driverInfo.rating || '5.0'}</span>
-                                                    </div>
-                                                    <span className="text-slate-200">|</span>
-                                                    <span className="text-[10px] font-black text-[#45C9FF] uppercase tracking-widest">{driverInfo.vehicle_details?.[0]?.plate_number || 'YGN-1234'}</span>
-                                                </div>
-                                            </div>
-                                            <button className="w-14 h-14 bg-green-500 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-green-100 active:scale-90">
-                                                <Phone className="w-6 h-6" />
-                                            </button>
-                                        </div>
-                                        
-                                        <div className="bg-slate-50 p-5 rounded-3xl flex justify-between items-center">
-                                            <div>
-                                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">ခရီးစဉ်အခြေအနေ</p>
-                                                <p className="text-sm font-black text-[#45C9FF] mt-1">
-                                                    {activeTrip.status === 'ACCEPTED' ? 'Driver လာနေပါပြီ' : 
-                                                     activeTrip.status === 'ARRIVED' ? 'ကားရောက်ရှိနေပါပြီ' : 'ခရီးစဉ်စတင်နေပါပြီ'}
-                                                </p>
-                                            </div>
-                                            <ShieldCheck className="w-8 h-8 text-green-500 opacity-30" />
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* 5. Completed Screen */}
-                        {step === 'COMPLETED' && (
-                            <div className="h-full flex items-center justify-center p-6 bg-black/40 backdrop-blur-md pointer-events-auto">
-                                <div className="bg-white w-full rounded-[56px] p-12 text-center shadow-2xl space-y-6">
-                                    <div className="w-24 h-24 bg-green-100 text-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                                        <ShieldCheck className="w-12 h-12" />
-                                    </div>
-                                    <h3 className="text-3xl font-black text-slate-800">ခရီးစဉ်ပြီးဆုံးပါပြီ</h3>
-                                    <p className="text-slate-400 font-bold leading-relaxed">Pya Pay ဖြင့် ခရီးသွားပေးသည့်အတွက် ကျေးဇူးတင်ပါသည်။</p>
-                                    <div className="bg-slate-50 p-6 rounded-3xl flex justify-between">
-                                        <span className="text-slate-400 font-black uppercase text-xs">Total Fare</span>
-                                        <span className="text-[#45C9FF] font-black text-xl">3,500 Ks</span>
-                                    </div>
-                                    <button onClick={() => setStep('SERVICES')} className="w-full bg-[#45C9FF] text-white font-black py-5 rounded-[24px] shadow-xl text-lg">DONE</button>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                </div>
-            );
+            setTimeout(() => {
+                document.getElementById('splash').style.opacity = '0';
+                setTimeout(() => document.getElementById('splash').classList.add('hidden'), 700);
+            }, 2000);
         };
 
-        const WalletScreen = ({ passenger, onNavigate }) => (
-            <div className="h-full bg-[#45C9FF] p-8 flex flex-col">
-                <div className="flex items-center space-x-4 mb-10">
-                    <button onClick={() => onNavigate('HOME')} className="text-white"><ChevronLeft className="w-8 h-8" /></button>
-                    <h2 className="text-2xl font-black text-white uppercase tracking-widest">My Wallet</h2>
-                </div>
-                <div className="bg-white p-10 rounded-[48px] shadow-2xl">
-                    <p className="text-slate-400 font-black text-xs uppercase mb-1">Balance</p>
-                    <h3 className="text-5xl font-black text-[#45C9FF]">{(passenger?.wallet_balance || 0).toLocaleString()} <span className="text-sm">Ks</span></h3>
-                    <button className="w-full bg-[#45C9FF] text-white font-black py-5 rounded-3xl mt-12 shadow-xl active:scale-95 transition-all">+ Add Money</button>
-                </div>
-                <div className="mt-10 space-y-4 overflow-y-auto">
-                    <h4 className="text-white font-black text-sm uppercase tracking-widest px-2">Transactions</h4>
-                    {[1,2,3].map(i => (
-                        <div key={i} className="bg-white/10 backdrop-blur-md p-4 rounded-2xl flex justify-between items-center text-white">
-                            <div className="flex items-center space-x-3">
-                                <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center"><Bike className="w-5 h-5" /></div>
-                                <div><p className="font-black text-xs">Ride Booking</p><p className="text-[9px] opacity-60 font-bold uppercase">Yesterday</p></div>
-                            </div>
-                            <p className="font-black">-3,500 Ks</p>
-                        </div>
-                    ))}
-                </div>
-            </div>
-        );
+        function initMap() {
+            map = L.map('map', { zoomControl: false, center: [16.8661, 96.1951], zoom: 16 });
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
-        const ProfileScreen = ({ passenger }) => (
-            <div className="h-full bg-slate-50 flex flex-col">
-                <div className="bg-[#45C9FF] p-12 rounded-b-[64px] text-center shadow-lg">
-                    <div className="w-24 h-24 bg-white rounded-[32px] mx-auto mb-4 flex items-center justify-center shadow-2xl overflow-hidden relative">
-                        {passenger?.avatar_url ? <img src={passenger.avatar_url} className="w-full h-full object-cover" /> : <User className="w-12 h-12 text-[#45C9FF]" />}
-                    </div>
-                    <h2 className="text-2xl font-black text-white">{passenger?.full_name || 'Partner'}</h2>
-                    <div className="inline-flex items-center bg-white/20 px-4 py-1 rounded-full mt-2">
-                        <Star className="w-3 h-3 text-yellow-400 fill-current mr-1" />
-                        <span className="text-white text-[10px] font-black uppercase tracking-widest">Gold Member</span>
-                    </div>
-                </div>
-                <div className="p-8 space-y-4">
-                    <button className="w-full flex items-center justify-between p-6 bg-white rounded-[32px] shadow-sm border border-slate-50">
-                        <div className="flex items-center space-x-4"><History className="text-[#45C9FF]" /><span className="font-black text-slate-700">ခရီးစဉ်မှတ်တမ်း</span></div>
-                        <ArrowRight className="text-slate-200 w-5 h-5" />
-                    </button>
-                    <button className="w-full flex items-center justify-between p-6 bg-white rounded-[32px] shadow-sm border border-slate-50">
-                        <div className="flex items-center space-x-4"><ShieldCheck className="text-[#45C9FF]" /><span className="font-black text-slate-700">လုံခြုံရေးနှင့် စည်းကမ်းချက်</span></div>
-                        <ArrowRight className="text-slate-200 w-5 h-5" />
-                    </button>
-                    <button onClick={() => supabase.auth.signOut()} className="w-full py-5 bg-red-50 text-red-500 font-black rounded-[32px] border border-red-100 mt-12 shadow-sm active:scale-95 transition-all flex items-center justify-center space-x-2">
-                        <LogOut className="w-5 h-5" />
-                        <span>အကောင့်ထွက်မည်</span>
-                    </button>
-                </div>
-            </div>
-        );
+            const userIcon = L.divIcon({
+                className: 'custom-user-marker',
+                html: `<div class="user-loc-marker"></div>`,
+                iconSize: [20, 20],
+                iconAnchor: [10, 10]
+            });
+            userMarker = L.marker([16.8661, 96.1951], { icon: userIcon }).addTo(map);
+            accuracyCircle = L.circle([16.8661, 96.1951], { radius: 0, fillOpacity: 0.1, color: '#45C9FF', stroke: false }).addTo(map);
+        }
 
-        const rootElement = document.getElementById('root');
-        const root = createRoot(rootElement);
-        root.render(<App />);
+        async function startGPS() {
+            const gpsIndicator = document.getElementById('gps-indicator');
+            const gpsText = document.getElementById('gps-text');
+            const pickupDisplay = document.getElementById('pickup-display');
+
+            const options = { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 };
+
+            const onSuccess = (pos) => {
+                const lat = pos.coords.latitude;
+                const lng = pos.coords.longitude;
+                const accuracy = pos.coords.accuracy;
+
+                currentPos = { lat, lng };
+                userMarker.setLatLng([lat, lng]);
+                accuracyCircle.setLatLng([lat, lng]).setRadius(accuracy);
+
+                gpsIndicator.className = 'w-2.5 h-2.5 rounded-full bg-green-500';
+                gpsText.innerText = accuracy < 30 ? 'Strong' : 'Weak';
+                pickupDisplay.value = "Current Location";
+
+                if (!window.initialCentered) {
+                    smartRecenter();
+                    window.initialCentered = true;
+                }
+            };
+
+            const onError = (err) => {
+                gpsIndicator.className = 'w-2.5 h-2.5 rounded-full bg-red-500';
+                gpsText.innerText = 'Failed';
+                if (err.code === 1 || err.code === 3) document.getElementById('gps-error').style.display = 'flex';
+            };
+
+            navigator.geolocation.getCurrentPosition(onSuccess, onError, options);
+            navigator.geolocation.watchPosition(onSuccess, onError, options);
+        }
+
+        window.smartRecenter = () => {
+            if (currentPos) map.flyTo([currentPos.lat, currentPos.lng], 18, { animate: true, duration: 1 });
+        };
+
+        window.setVehicle = (type) => {
+            selectedVehicle = type;
+            document.querySelectorAll('.service-card').forEach(c => {
+                c.classList.remove('active');
+                c.querySelector('i').classList.replace('pya-blue', 'text-gray-300');
+                c.querySelector('span').classList.replace('text-gray-800', 'text-gray-400');
+            });
+            const active = document.getElementById('v-' + type);
+            active.classList.add('active');
+            active.querySelector('i').classList.replace('text-gray-300', 'pya-blue');
+            active.querySelector('span').classList.replace('text-gray-400', 'text-gray-800');
+        };
+
+        window.bookRide = async () => {
+            if (!currentPos) return;
+            const dest = document.getElementById('destination-input').value;
+            if (!dest) return;
+
+            document.getElementById('view-home').classList.add('hidden');
+            document.getElementById('view-searching').classList.remove('hidden');
+
+            try {
+                const fare = selectedVehicle === 'ECONOMY' ? 2500 : (selectedVehicle === 'BIKE' ? 1500 : 3000);
+                const { data, error } = await supabase.from('trip_requests').insert([{
+                    pickup_lat: currentPos.lat,
+                    pickup_lng: currentPos.lng,
+                    pickup_address: "Current Location",
+                    drop_address: dest,
+                    fare: fare,
+                    distance: 3.2,
+                    status: 'PENDING'
+                }]).select().single();
+
+                if (error) throw error;
+                activeTripId = data.id;
+            } catch (err) {
+                cancelBooking();
+            }
+        };
+
+        window.cancelBooking = async () => {
+            if (activeTripId) await supabase.from('trip_requests').update({ status: 'CANCELLED' }).eq('id', activeTripId);
+            document.getElementById('view-searching').classList.add('hidden');
+            document.getElementById('view-home').classList.remove('hidden');
+        };
     </script>
 </body>
 </html>
