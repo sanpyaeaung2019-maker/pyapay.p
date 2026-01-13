@@ -14,34 +14,24 @@
         body { font-family: 'Inter', sans-serif; background-color: #F8FAFC; overflow-x: hidden; margin: 0; padding: 0; }
         .safe-top { padding-top: env(safe-area-inset-top); }
         .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
-        
         #map { width: 100%; height: 100%; position: absolute; top: 0; left: 0; z-index: 0; }
         .view-hidden { display: none !important; }
-        
         .bg-brand { background-color: #00B0FF; }
         .text-brand { color: #00B0FF; }
-        .border-brand { border-color: #00B0FF; }
-
-        ::-webkit-scrollbar { display: none; }
-
         .center-pin {
             position: absolute; top: 50%; left: 50%;
             transform: translate(-50%, -100%);
             z-index: 100; pointer-events: none;
         }
-
         .animate-slide-up { animation: slideUp 0.3s ease-out; }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-
         .pulse-ring {
             position: absolute; width: 80px; height: 80px;
             background: rgba(0, 176, 255, 0.2); border-radius: 50%;
             animation: pulse 2s infinite;
         }
         @keyframes pulse { 0% { transform: scale(0.5); opacity: 1; } 100% { transform: scale(2); opacity: 0; } }
-
-        .btn-action { transition: all 0.2s; border-bottom: 4px solid rgba(0,0,0,0.1); }
-        .btn-action:active { transform: scale(0.96); border-bottom-width: 0; margin-top: 4px; }
+        .btn-action:active { transform: scale(0.96); }
     </style>
 </head>
 <body class="h-screen flex flex-col">
@@ -68,7 +58,7 @@
                        oninput="homeSearch(this.value)">
             </div>
             <!-- Quick Search Dropdown -->
-            <div id="home-search-results" class="absolute top-full left-5 right-5 bg-white shadow-2xl rounded-2xl mt-2 max-h-60 overflow-y-auto z-[100] hidden border border-gray-50"></div>
+            <div id="home-search-results" class="absolute top-full left-5 right-5 bg-white shadow-2xl rounded-2xl mt-2 max-h-60 overflow-y-auto z-[100] hidden border border-gray-100"></div>
         </div>
 
         <div class="mt-6 px-5 grid grid-cols-2 gap-3">
@@ -88,11 +78,11 @@
             </div>
         </div>
 
-        <!-- Ad Banner -->
-        <div class="mt-6 px-5">
+        <!-- Ad Sections -->
+        <div class="mt-8 px-5">
             <div class="rounded-2xl overflow-hidden h-24 bg-gradient-to-r from-blue-600 to-brand p-5 flex items-center justify-between text-white shadow-lg">
                 <div>
-                    <h4 class="text-sm font-black uppercase italic">Promotion</h4>
+                    <h4 class="text-sm font-black uppercase italic">ငွေသားပြန်အမ်းငွေ</h4>
                     <p class="text-[10px] font-bold opacity-80">၅ ကြိမ်စီးလျှင် ၁ ကြိမ် အခမဲ့</p>
                 </div>
                 <i data-lucide="gift" class="w-10 h-10 opacity-30"></i>
@@ -101,34 +91,34 @@
 
         <div class="mt-8 px-5">
             <h3 class="text-xs font-black text-gray-400 uppercase tracking-widest mb-4 italic">ဝန်ဆောင်မှုများ</h3>
-            <div class="flex gap-5 overflow-x-auto pb-2">
+            <div class="flex gap-5 overflow-x-auto pb-4">
                 <div class="flex flex-col items-center gap-2 cursor-pointer group" onclick="switchView('map-select')">
-                    <div class="w-16 h-16 bg-blue-50 border border-blue-100 rounded-3xl flex items-center justify-center group-active:scale-90 transition-all shadow-sm">
+                    <div class="w-16 h-16 bg-blue-50 border border-blue-100 rounded-[20px] flex items-center justify-center group-active:scale-90 transition-all shadow-sm">
                         <i data-lucide="car" class="w-8 h-8 text-brand"></i>
                     </div>
                     <span class="text-[10px] font-black uppercase text-gray-700">ကား</span>
                 </div>
                 <div class="flex flex-col items-center gap-2 cursor-pointer group" onclick="switchView('map-select')">
-                    <div class="w-16 h-16 bg-orange-50 border border-orange-100 rounded-3xl flex items-center justify-center group-active:scale-90 transition-all shadow-sm">
+                    <div class="w-16 h-16 bg-orange-50 border border-orange-100 rounded-[20px] flex items-center justify-center group-active:scale-90 transition-all shadow-sm">
                         <i data-lucide="bike" class="w-8 h-8 text-orange-500"></i>
                     </div>
                     <span class="text-[10px] font-black uppercase text-gray-700">သုံးဘီး</span>
                 </div>
                 <div class="flex flex-col items-center gap-2 relative opacity-50">
-                    <div class="w-16 h-16 bg-gray-50 border border-gray-100 rounded-3xl flex items-center justify-center">
+                    <div class="w-16 h-16 bg-gray-50 border border-gray-100 rounded-[20px] flex items-center justify-center">
                         <i data-lucide="package" class="w-8 h-8 text-gray-400"></i>
                     </div>
-                    <span class="text-[10px] font-black uppercase text-gray-400">ပို့ဆောင်ရေး</span>
+                    <span class="text-[10px] font-black uppercase text-gray-400">Delivery</span>
                     <div class="absolute -top-1 -right-1 bg-gray-800 text-white text-[6px] font-black px-1.5 py-0.5 rounded-full">SOON</div>
                 </div>
             </div>
         </div>
 
-        <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-8 py-4 safe-bottom flex justify-between items-center z-50">
-            <button onclick="switchView('home')" class="flex flex-col items-center gap-1 text-brand"><i data-lucide="home" class="w-5 h-5 stroke-[3]"></i><span class="text-[8px] font-black uppercase">ပင်မ</span></button>
-            <button class="flex flex-col items-center gap-1 text-gray-300"><i data-lucide="grid-3x3" class="w-5 h-5"></i><span class="text-[8px] font-black uppercase">ဝန်ဆောင်မှု</span></button>
-            <button class="flex flex-col items-center gap-1 text-gray-300"><i data-lucide="calendar" class="w-5 h-5"></i><span class="text-[8px] font-black uppercase">မှတ်တမ်း</span></button>
-            <button onclick="switchView('profile')" class="flex flex-col items-center gap-1 text-gray-300"><i data-lucide="user" class="w-5 h-5"></i><span class="text-[8px] font-black uppercase">အကောင့်</span></button>
+        <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-8 py-4 safe-bottom flex justify-between items-center z-50 shadow-2xl">
+            <button onclick="switchView('home')" class="flex flex-col items-center gap-1 text-brand"><i data-lucide="home" class="w-5 h-5 stroke-[3]"></i><span class="text-[8px] font-black uppercase">Home</span></button>
+            <button class="flex flex-col items-center gap-1 text-gray-300"><i data-lucide="grid-3x3" class="w-5 h-5"></i><span class="text-[8px] font-black uppercase">Service</span></button>
+            <button class="flex flex-col items-center gap-1 text-gray-300"><i data-lucide="calendar" class="w-5 h-5"></i><span class="text-[8px] font-black uppercase">History</span></button>
+            <button onclick="switchView('profile')" class="flex flex-col items-center gap-1 text-gray-300"><i data-lucide="user" class="w-5 h-5"></i><span class="text-[8px] font-black uppercase">Profile</span></button>
         </div>
     </div>
 
@@ -136,7 +126,6 @@
     <div id="view-map-select" class="flex-1 flex flex-col view-hidden bg-white relative">
         <div id="map"></div>
         
-        <!-- Center Pin for Map Selection -->
         <div id="center-pin" class="center-pin hidden">
             <div class="flex flex-col items-center">
                 <div class="bg-brand text-white px-4 py-1.5 rounded-full text-[10px] font-black shadow-lg mb-2 uppercase border-2 border-white tracking-widest italic animate-bounce">ဤနေရာကိုရွေးပါ</div>
@@ -152,28 +141,22 @@
                 </div>
                 <div class="space-y-3 relative">
                     <div class="flex items-center gap-3 bg-gray-50 p-4 rounded-2xl border border-gray-100">
-                        <div class="w-3 h-3 rounded-full bg-brand shadow-[0_0_10px_rgba(0,176,255,0.4)]"></div>
+                        <div class="w-3 h-3 rounded-full bg-brand"></div>
                         <input type="text" id="input-pickup" placeholder="လာကြိုရမည့်နေရာ" class="flex-1 bg-transparent border-none outline-none font-black text-gray-800 text-xs" readonly onclick="startPin('pickup')">
-                        <button onclick="startPin('pickup')" class="p-2 bg-white rounded-xl shadow-sm text-brand border border-gray-50"><i data-lucide="map-pin" class="w-4 h-4"></i></button>
                     </div>
                     <div class="flex items-center gap-3 bg-gray-50 p-4 rounded-2xl border border-gray-100">
-                        <div class="w-3 h-3 rounded-full bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.4)]"></div>
+                        <div class="w-3 h-3 rounded-full bg-red-500"></div>
                         <input type="text" id="input-dest" placeholder="ဘယ်ကိုသွားမလဲ?" class="flex-1 bg-transparent border-none outline-none font-black text-gray-800 text-xs" oninput="mapSearch(this.value)">
-                        <button onclick="startPin('dest')" class="p-2 bg-white rounded-xl shadow-sm text-red-500 border border-gray-50"><i data-lucide="map-pin" class="w-4 h-4"></i></button>
                     </div>
                     <div id="map-search-results" class="absolute top-full left-0 right-0 bg-white shadow-2xl rounded-2xl mt-2 max-h-60 overflow-y-auto z-[100] hidden border border-gray-50"></div>
                 </div>
             </div>
         </div>
 
-        <!-- Floating Buttons -->
-        <div class="absolute right-5 bottom-[420px] flex flex-col gap-3 z-50">
-            <button onclick="recenterMap()" class="bg-white p-4 rounded-2xl shadow-xl text-brand border-2 border-gray-50 active:scale-90 transition-all">
-                <i data-lucide="crosshair" class="w-6 h-6"></i>
-            </button>
-        </div>
+        <button onclick="recenterMap()" class="absolute right-5 bottom-[420px] bg-white p-4 rounded-2xl shadow-xl text-brand z-50 border-2 border-gray-50 active:scale-90 transition-all">
+            <i data-lucide="crosshair" class="w-6 h-6"></i>
+        </button>
 
-        <!-- Confirm Pin Button (Hidden by default) -->
         <div id="confirm-pin-btn" class="absolute bottom-12 left-8 right-8 z-[110] view-hidden">
             <button onclick="confirmPin()" class="w-full bg-brand text-white font-black py-5 rounded-3xl shadow-2xl uppercase text-sm tracking-widest border-b-4 border-blue-700 active:scale-95 transition-all">ဤနေရာကို အတည်ပြုမည်</button>
         </div>
@@ -194,10 +177,10 @@
                 <button onclick="confirmBooking()" class="w-full bg-brand text-white py-5 rounded-3xl font-black text-xl shadow-2xl uppercase tracking-widest border-b-4 border-blue-700 active:scale-95 transition-all italic">ကားခေါ်ယူမည်</button>
             </div>
             <div id="empty-booking" class="text-center py-10">
-                <div class="w-20 h-20 bg-blue-50 rounded-[30px] flex items-center justify-center mx-auto mb-6 text-brand/30 border-2 border-dashed border-brand/20">
-                    <i data-lucide="route" class="w-10 h-10"></i>
+                <div class="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-6 text-brand/30 border-2 border-dashed border-brand/20">
+                    <i data-lucide="route" class="w-8 h-8"></i>
                 </div>
-                <p class="text-[11px] font-black text-gray-300 uppercase italic tracking-widest">ကျေးဇူးပြု၍ တည်နေရာများ ရွေးချယ်ပေးပါ</p>
+                <p class="text-[11px] font-black text-gray-300 uppercase italic">ကျေးဇူးပြု၍ တည်နေရာများ ရွေးချယ်ပေးပါ</p>
             </div>
         </div>
     </div>
@@ -213,29 +196,22 @@
         </div>
         <h2 class="text-3xl font-black text-gray-800 mb-2 tracking-tighter italic uppercase">Finding Driver</h2>
         <p class="text-gray-400 font-bold text-xs uppercase tracking-[0.3em]">အနီးဆုံး ယာဉ်မောင်းကို ရှာဖွေနေပါသည်</p>
-        <button onclick="switchView('map-select')" class="mt-20 w-full max-w-xs bg-red-50 text-red-500 font-black py-5 rounded-3xl text-sm uppercase tracking-widest border-2 border-red-100 active:scale-95 transition-all">ပယ်ဖျက်မည်</button>
+        <button onclick="switchView('home')" class="mt-20 w-full max-w-xs bg-red-50 text-red-500 font-black py-5 rounded-3xl text-sm uppercase tracking-widest border-2 border-red-100 active:scale-95 transition-all">ပယ်ဖျက်မည်</button>
     </div>
 
     <!-- VIEW: PROFILE -->
     <div id="view-profile" class="flex-1 flex flex-col view-hidden bg-white safe-top">
         <div class="p-6 border-b border-gray-100 flex items-center justify-between">
             <button onclick="switchView('home')" class="p-2.5 bg-gray-50 rounded-xl text-brand"><i data-lucide="chevron-left"></i></button>
-            <h1 class="text-sm font-black uppercase italic tracking-widest">Account Settings</h1>
+            <h1 class="text-sm font-black uppercase italic tracking-widest">Profile</h1>
             <div class="w-10"></div>
         </div>
         <div class="p-8 flex flex-col items-center flex-1">
             <img src="https://picsum.photos/seed/passenger/200" class="w-28 h-28 rounded-[40px] object-cover shadow-2xl border-4 border-white mb-6" />
             <div class="w-full space-y-4">
-                <div class="p-5 bg-gray-50 rounded-2xl flex justify-between items-center">
-                    <span class="text-xs font-black text-gray-400 uppercase italic">နာမည်</span>
-                    <span class="text-sm font-black text-gray-800 italic">ကိုအောင်</span>
-                </div>
-                <div class="p-5 bg-gray-50 rounded-2xl flex justify-between items-center">
-                    <span class="text-xs font-black text-gray-400 uppercase italic">ဖုန်းနံပါတ်</span>
-                    <span class="text-sm font-black text-gray-800 italic">09 778 221 445</span>
-                </div>
+                <div class="p-5 bg-gray-50 rounded-2xl flex justify-between items-center"><span class="text-xs font-black text-gray-400 uppercase italic">နာမည်</span><span class="text-sm font-black text-gray-800 italic">ကိုအောင်</span></div>
+                <div class="p-5 bg-gray-50 rounded-2xl flex justify-between items-center"><span class="text-xs font-black text-gray-400 uppercase italic">ဖုန်း</span><span class="text-sm font-black text-gray-800 italic">09 778 221 445</span></div>
             </div>
-            <button onclick="location.reload()" class="w-full mt-auto p-5 bg-red-50 text-red-500 font-black rounded-3xl border-2 border-red-100 text-[10px] uppercase tracking-widest">Logout</button>
         </div>
     </div>
 
@@ -248,17 +224,13 @@
         let map, userMarker, pickupMarker, destMarker, routeLine;
         let currentPos = null, pickupPos = null, destPos = null;
         let isPicking = false, pickTarget = null;
+        const P_ID = '99999999-9999-9999-9999-999999999999'; // Fixed Passenger ID
 
-        window.onload = () => {
-            lucide.createIcons();
-            initMap();
-            startGPS();
-        };
+        window.onload = () => { lucide.createIcons(); initMap(); startGPS(); };
 
         function initMap() {
             map = L.map('map', { zoomControl: false, center: [16.8661, 96.1951], zoom: 16 });
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-            
             userMarker = L.marker([16.8661, 96.1951], { 
                 icon: L.divIcon({ 
                     html: '<div style="background-color: #00B0FF; width: 14px; height: 14px; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 15px rgba(0,176,255,0.8);"></div>', 
@@ -334,33 +306,16 @@
         window.confirmPin = async () => {
             const center = map.getCenter();
             const pos = { lat: center.lat, lng: center.lng };
-            
             try {
                 const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos.lat}&lon=${pos.lng}`);
                 const data = await res.json();
-                const addr = data.display_name.split(',')[0] || "Selected Location";
-
-                if (pickTarget === 'pickup') {
-                    pickupPos = pos;
-                    document.getElementById('input-pickup').value = addr;
-                    addMarker('pickup', pos);
-                } else {
-                    destPos = pos;
-                    document.getElementById('input-dest').value = addr;
-                    addMarker('dest', pos);
-                }
+                const addr = data.display_name.split(',')[0] || "Selected Place";
+                if (pickTarget === 'pickup') { pickupPos = pos; document.getElementById('input-pickup').value = addr; addMarker('pickup', pos); }
+                else { destPos = pos; document.getElementById('input-dest').value = addr; addMarker('dest', pos); }
             } catch (err) {
-                if (pickTarget === 'pickup') {
-                    pickupPos = pos;
-                    document.getElementById('input-pickup').value = "Pinned Location";
-                    addMarker('pickup', pos);
-                } else {
-                    destPos = pos;
-                    document.getElementById('input-dest').value = "Pinned Location";
-                    addMarker('dest', pos);
-                }
+                if (pickTarget === 'pickup') { pickupPos = pos; document.getElementById('input-pickup').value = "Pinned Location"; addMarker('pickup', pos); }
+                else { destPos = pos; document.getElementById('input-dest').value = "Pinned Location"; addMarker('dest', pos); }
             }
-
             isPicking = false;
             document.getElementById('center-pin').classList.add('hidden');
             document.getElementById('confirm-pin-btn').classList.add('view-hidden');
@@ -371,13 +326,8 @@
         function addMarker(type, pos) {
             const iconHtml = `<div class="w-8 h-8 ${type==='pickup'?'bg-brand':'bg-red-500'} rounded-full border-4 border-white shadow-2xl"></div>`;
             const icon = L.divIcon({ html: iconHtml, className: '', iconSize: [32,32], iconAnchor: [16,16] });
-            if (type === 'pickup') {
-                if (pickupMarker) map.removeLayer(pickupMarker);
-                pickupMarker = L.marker([pos.lat, pos.lng], { icon }).addTo(map);
-            } else {
-                if (destMarker) map.removeLayer(destMarker);
-                destMarker = L.marker([pos.lat, pos.lng], { icon }).addTo(map);
-            }
+            if (type === 'pickup') { if (pickupMarker) map.removeLayer(pickupMarker); pickupMarker = L.marker([pos.lat, pos.lng], { icon }).addTo(map); }
+            else { if (destMarker) map.removeLayer(destMarker); destMarker = L.marker([pos.lat, pos.lng], { icon }).addTo(map); }
         }
 
         async function drawRoute() {
@@ -389,10 +339,8 @@
                     if (routeLine) map.removeLayer(routeLine);
                     routeLine = L.geoJSON(data.routes[0].geometry, { style: { color: '#00B0FF', weight: 8, opacity: 0.8 } }).addTo(map);
                     map.fitBounds(routeLine.getBounds(), { padding: [120, 120] });
-                    
                     const distKm = (data.routes[0].distance / 1000).toFixed(1);
                     const fare = Math.max(1500, Math.round(distKm * 800 + 1000));
-                    
                     document.getElementById('empty-booking').classList.add('hidden');
                     document.getElementById('route-info').classList.remove('hidden');
                     document.getElementById('fare-display').innerText = fare.toLocaleString() + ' Ks';
@@ -405,7 +353,8 @@
             if (!pickupPos || !destPos) return;
             switchView('searching');
             try {
-                await supabase.from('trip_requests').insert({
+                const { error } = await supabase.from('trip_requests').insert({
+                    passenger_id: P_ID,
                     pickup_lat: pickupPos.lat, pickup_lng: pickupPos.lng,
                     drop_lat: destPos.lat, drop_lng: destPos.lng,
                     pickup_address: document.getElementById('input-pickup').value,
@@ -415,16 +364,11 @@
                     status: 'PENDING',
                     created_at: new Date().toISOString()
                 });
-            } catch (e) {
-                alert("ခေါ်ယူမှု မအောင်မြင်ပါ။");
-                switchView('home');
-            }
+                if(error) throw error;
+            } catch (e) { alert("ခေါ်ယူမှု မအောင်မြင်ပါ။"); switchView('home'); }
         };
 
-        window.recenterMap = () => {
-            if (currentPos) map.flyTo([currentPos.lat, currentPos.lng], 18);
-        };
-
+        window.recenterMap = () => { if (currentPos) map.flyTo([currentPos.lat, currentPos.lng], 18); };
         window.switchView = (view) => {
             ['home', 'map-select', 'profile', 'searching'].forEach(v => document.getElementById(`view-${v}`).classList.add('view-hidden'));
             document.getElementById(`view-${view}`).classList.remove('view-hidden');
@@ -437,11 +381,7 @@
                 navigator.geolocation.watchPosition(p => {
                     currentPos = { lat: p.coords.latitude, lng: p.coords.longitude };
                     userMarker.setLatLng([currentPos.lat, currentPos.lng]);
-                    if (!pickupPos) {
-                        pickupPos = currentPos;
-                        document.getElementById('input-pickup').value = "လက်ရှိတည်နေရာ";
-                        addMarker('pickup', currentPos);
-                    }
+                    if (!pickupPos) { pickupPos = currentPos; document.getElementById('input-pickup').value = "လက်ရှိတည်နေရာ"; addMarker('pickup', currentPos); }
                 }, null, { enableHighAccuracy: true });
             }
         }
@@ -453,9 +393,7 @@
             switchView('map-select');
             document.getElementById('input-pickup').value = "လက်ရှိတည်နေရာ";
             document.getElementById('input-dest').value = saved.addr;
-            addMarker('pickup', pickupPos);
-            addMarker('dest', destPos);
-            drawRoute();
+            addMarker('pickup', pickupPos); addMarker('dest', destPos); drawRoute();
         };
     </script>
 </body>
